@@ -5,12 +5,11 @@ import (
 	"memgmtgo/datatype"
 	"memgmtgo/schema"
 	"memgmtgo/tuple"
-	// "memgmtgo/page"
-	// "os"
-	// "encoding/binary"
 )
 
 func main() {
+	null := datatype.Null{}
+
 	personSchema := schema.NewSchema("people")
 
 	personSchema.Add(datatype.BigInteger, "id", false)
@@ -25,7 +24,8 @@ func main() {
 		"Daniel",  		// name
 		int32(-36), 		// age
 		true,      		// inMichigan
-		"Dan",     		// nickname (nullable)
+		// "Dan",     		// nickname (nullable)
+		null,
 		float32(-98.6),	// temperature (nullable)
 	}
 
@@ -36,7 +36,7 @@ func main() {
 	//  0                       1                      2                         3                         4
 	//  0 1  2 3 4 5  6 7  8 9  0 1  2 3  4 5  6 7 8 9 0 1 2 3 4 5 6  7  8   9   0   1   2 3 4 5  6 7 8 9  0  1   2  3   4  5
 	//
-	// [0 46 0 6 0 16 0 24 0 32 0 36 0 37 0 42 0 0 0 0 0 0 0 1 0 6 68 97 110 105 101 108 255 255 255 220 1 0 3 68 97 110 66 197 51 51]
+	// [0 44 0 6 0 17 0 25 0 33 0 37 0 38 0 40 0 255 255 255 255 255 255 255 255 0 6 68 97 110 105 101 108 255 255 255 220 1 0 0 194 197 51 51]
 	// [0 46 0 6 0 16 0 24 0 32 0 36 0 37 0 42 0 0 0 0 0 0 0 1 0 6 68 97 110 105 101 108 0 0 0 36 1 0 3 68 97 110 66 197 51 51]
 	//  ^    ^   ^    ^    ^    ^    ^    ^    ^               ^                         ^        ^ ^             ^
 	//  |    |   |    |    |    |    |    |    + id			   + name                    + age    | + nickname    + temperature

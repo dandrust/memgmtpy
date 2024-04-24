@@ -14,14 +14,69 @@ const (
 	offsetPointerSize     = 2
 )
 
+func writeNull(bytes []byte, assetOffsetPos int, nullBitFieldStart int, fieldNumber int) {
+	// Calculate the null bitfield position
+	p := nullBitFieldStart + (fieldNumber / 8)
+	// Calclate the shift/offset
+	shift := fieldNumber % 8
+	fmt.Println("i is ", fieldNumber, ". p is", p, "and shift is", shift)
+	// Set the appropriate null bit
+	mask := byte(1 << shift)
+	fmt.Printf("mask is %b\n", mask)
+	// Write a zero pointer to the offset array
+	bytes[p] ^= mask
+	fmt.Printf("bitfield is now %b\n", bytes[p])
+	
+	binary.BigEndian.PutUint16(bytes[assetOffsetPos:], uint16(0))
+}
+
+func write(bytes []byte, assetOffsetPos int, assetPos int, fieldNumber int, to_write []byte) []byte {
+	// Write the assetPos value at assetOffsetPos
+	binary.BigEndian.PutUint16(bytes[assetOffsetPos:], uint16(assetPos))
+
+	// Append the bytes
+	return append(bytes, to_write...)
+}
+
 func Encode(values []interface{}, schema schema.Schema) []byte {
+	// How many nullable fields do we have?
+	var nullableCount int
+	for _, f := range schema.Fields {
+		if f.Nullable { nullableCount += 1 }
+	}
+	fmt.Println(schema.Name, "has", nullableCount, "nullable fields")
+
+	// How many null bitfields do we need?
+	nullBitFieldCount := nullableCount / 8
+	if (nullableCount % 8) > 0 {
+		nullBitFieldCount += 1
+	}
+	fmt.Println("We need", nullBitFieldCount, "bit fields")
+
 	// Here we know that we'll have a 2 byte tuple
 	// length, a 2 byte asset length, and one 2 byte
-	// offset per asset.  Create a slice of that
-	// capaity, and then we'll append assets onto that
-	// as we go
-	headerLength := lengthSize + offsetArrayLengthSize + (offsetPointerSize * schema.AssetCount)
+	// offset per asset, plus any null bitfields.  
+	// Create a slice of that capaity, and then we'll 
+	// append assets onto that as we go
+	headerLength := lengthSize + offsetArrayLengthSize + (offsetPointerSize * schema.AssetCount) + nullBitFieldCount
 	bytes := make([]byte, headerLength)
+
+	// Populate the bit field arrays with 1's matching the number of fields we'll write. That way, any new fields
+	// will be null by default
+	nullBitFieldStart := headerLength - nullBitFieldCount
+	j := 0
+	for i := schema.AssetCount; i > 0; i -= 8 {
+		var v byte
+		if i < 8 {
+			v = 1 << i
+			v -= 1
+		} else { 
+			v = byte(0xFF)
+		}
+		fmt.Printf("Writing %b at pos %d\n", v, j)
+		bytes[nullBitFieldStart + j] = v
+		j += 1
+	}
 
 	// Write the number of slots!
 	binary.BigEndian.PutUint16(bytes[lengthSize:], uint16(schema.AssetCount))
@@ -36,12 +91,18 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 		var to_write []byte
 
 		switch field.DataType {
+		
 		case datatype.String:
-			v, ok := value.(string)
-			if !ok {
-				panic("expected string!")
+			switch v := value.(type) {
+			case string:
+				to_write = datatype.Encode.String(v)
+				bytes = write(bytes, assetOffsetPos, assetPos, i, to_write)
+				assetPos += len(to_write)
+			case datatype.Null:
+				if !field.Nullable { panic("encountered null for non nullable field!") }				
+
+				writeNull(bytes, assetOffsetPos, nullBitFieldStart, i)
 			}
-			to_write = datatype.Encode.String(v)
 		case datatype.Integer:
 			v, ok := value.(int32)
 			if !ok {
@@ -49,6 +110,8 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 			}
 
 			to_write = datatype.Encode.Integer(v)
+			bytes = write(bytes, assetOffsetPos, assetPos, i, to_write)
+			assetPos += len(to_write)
 		case datatype.BigInteger:
 			v, ok := value.(int64)
 			if !ok {
@@ -56,6 +119,8 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 			}
 
 			to_write = datatype.Encode.BigInteger(v)
+			bytes = write(bytes, assetOffsetPos, assetPos, i, to_write)
+			assetPos += len(to_write)
 		case datatype.Boolean:
 			v, ok := value.(bool)
 			if !ok {
@@ -63,6 +128,8 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 			}
 
 			to_write = datatype.Encode.Boolean(v)
+			bytes = write(bytes, assetOffsetPos, assetPos, i, to_write)
+			assetPos += len(to_write)
 		case datatype.Float:
 			v, ok := value.(float32)
 			if !ok {
@@ -70,15 +137,11 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 			}
 
 			to_write = datatype.Encode.Float(v)
+			bytes = write(bytes, assetOffsetPos, assetPos, i, to_write)
+			assetPos += len(to_write)
 		}
 
-		// Write the assetPos value at assetOffsetPos
-		binary.BigEndian.PutUint16(bytes[assetOffsetPos:], uint16(assetPos))
 		assetOffsetPos += offsetPointerSize
-
-		// Append the bytes
-		bytes = append(bytes, to_write...)
-		assetPos += len(to_write)
 	}
 
 	// Write the tuple length now that we know it
@@ -86,8 +149,6 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 
 	return bytes
 }
-
-// Schema { fields []Field{Name: string, DataType: int} }
 
 func Decode(bytes[]byte, schema schema.Schema) {
 	// In this context we don't care about tuple length, but it
@@ -98,7 +159,19 @@ func Decode(bytes[]byte, schema schema.Schema) {
 
 	offsetEntryPos := lengthSize + offsetArrayLengthSize
 
+	nullBitFieldStart := offsetEntryPos + (offsetPointerSize * assetCount)
+
 	for i := 0; i < assetCount; i++ {
+		// is it null?
+		p := i / 8
+		mask := byte(1 << (i % 8))
+
+		if (bytes[nullBitFieldStart + p] & mask) == 0 {
+			fmt.Println(schema.Fields[i].Name, ": NULL")
+			offsetEntryPos += offsetPointerSize
+			continue
+		}
+
 		// read the offset
 		offset := binary.BigEndian.Uint16(bytes[offsetEntryPos:])
 		offsetEntryPos += offsetPointerSize

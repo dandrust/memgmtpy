@@ -8,5 +8,7 @@ const (
 	Float
 )
 
+type Null struct {}
+
 var Encode = encode{}
 var Decode = decode{}
