@@ -87,29 +87,33 @@ func Encode(values []interface{}, schema schema.Schema) []byte {
 	return bytes
 }
 
+// Schema { fields []Field{Name: string, DataType: int} }
+
 func Decode(bytes[]byte, schema schema.Schema) {
 	// In this context we don't care about tuple length, but it
 	// will be helpful when we eventually need to pull arbitrary
 	// tuples from a page
 
 	assetCount := int(binary.BigEndian.Uint16(bytes[lengthSize:]))
-	fmt.Println("there are", assetCount, "assets")
 
 	offsetEntryPos := lengthSize + offsetArrayLengthSize
-	fmt.Println("asset entries start at pos", offsetEntryPos)
-	
 
 	for i := 0; i < assetCount; i++ {
 		// read the offset
 		offset := binary.BigEndian.Uint16(bytes[offsetEntryPos:])
-		fmt.Println("The offset at entry", i, "is", offset)
 		offsetEntryPos += offsetPointerSize
 
 		switch schema.Fields[i].DataType {
 		case datatype.Integer:
 			fmt.Println(schema.Fields[i].Name, ":", datatype.Decode.Integer(bytes[offset:]))
+		case datatype.BigInteger:
+			fmt.Println(schema.Fields[i].Name, ":", datatype.Decode.BigInteger(bytes[offset:]))
+		case datatype.Boolean:
+			fmt.Println(schema.Fields[i].Name, ":", datatype.Decode.Boolean(bytes[offset:]))
+		case datatype.Float:
+			fmt.Println(schema.Fields[i].Name, ":", datatype.Decode.Float(bytes[offset:]))
+		case datatype.String:
+			fmt.Println(schema.Fields[i].Name, ":", datatype.Decode.String(bytes[offset:]))
 		}
-
-		
 	}
 }

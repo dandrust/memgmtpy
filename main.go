@@ -21,12 +21,12 @@ func main() {
 	personSchema.Add(datatype.Float, "temperature", true)
 
 	values := []interface{}{
-		int64(1),  		// id
+		int64(-1),  		// id
 		"Daniel",  		// name
-		int32(36), 		// age
+		int32(-36), 		// age
 		true,      		// inMichigan
 		"Dan",     		// nickname (nullable)
-		float32(98.6),	// temperature (nullable)
+		float32(-98.6),	// temperature (nullable)
 	}
 
 	bytes := tuple.Encode(values, *personSchema)
@@ -36,6 +36,7 @@ func main() {
 	//  0                       1                      2                         3                         4
 	//  0 1  2 3 4 5  6 7  8 9  0 1  2 3  4 5  6 7 8 9 0 1 2 3 4 5 6  7  8   9   0   1   2 3 4 5  6 7 8 9  0  1   2  3   4  5
 	//
+	// [0 46 0 6 0 16 0 24 0 32 0 36 0 37 0 42 0 0 0 0 0 0 0 1 0 6 68 97 110 105 101 108 255 255 255 220 1 0 3 68 97 110 66 197 51 51]
 	// [0 46 0 6 0 16 0 24 0 32 0 36 0 37 0 42 0 0 0 0 0 0 0 1 0 6 68 97 110 105 101 108 0 0 0 36 1 0 3 68 97 110 66 197 51 51]
 	//  ^    ^   ^    ^    ^    ^    ^    ^    ^               ^                         ^        ^ ^             ^
 	//  |    |   |    |    |    |    |    |    + id			   + name                    + age    | + nickname    + temperature
