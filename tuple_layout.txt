@@ -1,0 +1,39 @@
+
+Basic layout
++--------+------------------+----------+----------+-----+----------+------------------+---------+---------+-----+---------+
+| length | off. arr. length | offset 1 | offset 2 | ... | offset N | null bitfield(s) | asset 1 | asset 2 | ... | asset N |
++--------+------------------+----------+----------+-----+----------+------------------+---------+---------+-----+---------+
+         2                  4          6          8                ^                  
+                                                                   |
+                                                                   + ( asset count * 2 ) + 4
+
+
+When an asset is null
+-----+----------+----------+----------+------------------+---------+---------+
+ ... | offset 1 | offset 2 | offset 3 | null bitfield(s) | asset 1 | asset 3 |
+     |   (0x12) |   (0x00) |   (0x15) |       0b11110111 |         |         |
+     |          |          |          |             ^    |         |         |
+-----+----------+----------+----------+------------------+---------+---------+
+                                                         0x12      0x15
+Offset array entry points to 0x00. Position in null bitfield is 0, indicating NULL ie not present
+
+
+
+Big Integer - 64 bit unsigned* int
+Integer     - 32 bit unsigned* int
+Float       - 32 bit floating point
+Boolean     - Single bit (1 byte)
+String      - Variable length; 2048 byte max. ASCII only
+
+*Go's tooling makes working with uints very simple
+
+
+String asset layout
+  Count | Character array . . .
++-------+---+---+---+---+---+------+---+---+---+---+---+
+|   11  | H | e | l | l | o | 0x32 | W | o | r | l | d |
++-------+---+---+---+---+---+------+---+---+---+---+---+
+0       2   3   4   5   6   7      8   9   0   1   2   3
+                                           1
+
+

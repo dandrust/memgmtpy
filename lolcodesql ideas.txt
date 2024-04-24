@@ -1,0 +1,77 @@
+GIMME
+    ALL THE THINGS [FROM table]
+    HOW MANY(another_place.bar)
+    MEH(whatever.scores)                BTW MEH means avg
+GET IT FROM
+    some_place AKA sp
+OH N FROM
+    another_place AKA ap TOO BUT ONLY IF ap.id = sp N ap.foo IZ 3
+BUT ONLY WHEN
+    sp.field IZ "hai"
+    N sp.other_field CANT BE "bai"
+    N sp.whatever IZ NOT (AINT) HUH      BTW this is a comment clarifying that HUH means null
+    R sp.foo ROLLIN WITH (1, 2, 3)
+LINE EM UP BY
+    whatever.field BOTTOMS UP
+IN SQUADS
+    whatever.field
+
+
+ORDER BY whatever.field ASC
+ORDER BY whatever.field DESC
+
+
+gimme a N b N c GET IT FROM whatever
+oh n gimme all the [table] things but only when table.a iz whatever.b
+oh n gimme foo N bar N baz get it from magic but only when magic.unicorn rollin with (1, 2, 3)
+
+but only when
+
+squad
+
+
+
+oh and gimme
+
+
+
+
+
+AS = AKA
+BTW is a comment
+SUM OF <x> AN <y>       BTW +
+DIFF OF <x> AN <y>      BTW -
+PRODUKT OF <x> AN <y>   BTW *
+QUOSHUNT OF <x> AN <y>  BTW /
+MOD OF <x> AN <y>       BTW modulo
+BIGGR OF <x> AN <y>     BTW max
+SMALLR OF <x> AN <y>    BTW min
+
+
+LOOK whatever IZ MADE OF
+    id  ITS BOSS
+    par ITS SUS NUMBERZ
+    foo ITS NUMBERZ                 // int 32
+    bar ITS BIG NUMBERSZ            // int 64
+    baz ITS SMOL NUMBERZ            // int 16
+    wut ITS WORDZ                   // var char
+    car ITS FRACTIONZ               // float
+    bar ITS BIG FRACTIONZ           // double (float)
+    cid ITS A(N) other_table           // foreign key
+N THATS IT
+
+id seq  BOSS 
+
+int 8   TINY NUMBERZ
+int 16  SMOL NUMBERZ
+int 32  NUMBERZ
+int 64  BIG NUMBERZ
+int 128 RLY BIG NUMBERZ
+
+float   FRACTIONZ
+double  BIG FRACTIONZ
+
+varchar WORDZ
+
+nullable (modifier) SUS (suspicious) or CHILL or CASUAL
+unsigned BUT ONLY GOOD VIBES
